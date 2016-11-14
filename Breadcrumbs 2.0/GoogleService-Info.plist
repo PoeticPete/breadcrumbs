@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>AD_UNIT_ID_FOR_BANNER_TEST</key>
+	<string>ca-app-pub-3940256099942544/2934735716</string>
+	<key>AD_UNIT_ID_FOR_INTERSTITIAL_TEST</key>
+	<string>ca-app-pub-3940256099942544/4411468910</string>
+	<key>CLIENT_ID</key>
+	<string>406724014386-u6cei6djqktdqoc57pma88gh1924hpdm.apps.googleusercontent.com</string>
+	<key>REVERSED_CLIENT_ID</key>
+	<string>com.googleusercontent.apps.406724014386-u6cei6djqktdqoc57pma88gh1924hpdm</string>
+	<key>API_KEY</key>
+	<string>AIzaSyD0Hy7PFnvpubBSsgjeUc9P39Q0y3S2tno</string>
+	<key>GCM_SENDER_ID</key>
+	<string>406724014386</string>
+	<key>PLIST_VERSION</key>
+	<string>1</string>
+	<key>BUNDLE_ID</key>
+	<string>com.PoeticPete.Breadcrumbs-2-0</string>
+	<key>PROJECT_ID</key>
+	<string>breadcrums-test</string>
+	<key>STORAGE_BUCKET</key>
+	<string>breadcrums-test.appspot.com</string>
+	<key>IS_ADS_ENABLED</key>
+	<true/>
+	<key>IS_ANALYTICS_ENABLED</key>
+	<false/>
+	<key>IS_APPINVITE_ENABLED</key>
+	<false/>
+	<key>IS_GCM_ENABLED</key>
+	<true/>
+	<key>IS_SIGNIN_ENABLED</key>
+	<true/>
+	<key>GOOGLE_APP_ID</key>
+	<string>1:406724014386:ios:059c2881686768f1</string>
+	<key>DATABASE_URL</key>
+	<string>https://breadcrums-test.firebaseio.com</string>
+</dict>
+</plist>
