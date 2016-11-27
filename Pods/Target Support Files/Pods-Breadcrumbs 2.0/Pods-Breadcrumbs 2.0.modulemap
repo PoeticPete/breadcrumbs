@@ -1,0 +1,6 @@
+framework module Pods_Breadcrumbs_2_0 {
+  umbrella header "Pods-Breadcrumbs 2.0-umbrella.h"
+
+  export *
+  module * { export * }
+}
