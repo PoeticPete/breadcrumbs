@@ -28,6 +28,15 @@ extension UIImage {
         
         return newImage
     }
+    
+    class func imageFromLayer (layer : CALayer) -> UIImage
+    {
+        UIGraphicsBeginImageContextWithOptions(layer.bounds.size, false, 0.0)
+        layer.render(in: UIGraphicsGetCurrentContext()!)
+        let outputImage = UIGraphicsGetImageFromCurrentImageContext()
+        UIGraphicsEndImageContext()
+        return outputImage!
+    }
 }
 
 extension UINavigationController {

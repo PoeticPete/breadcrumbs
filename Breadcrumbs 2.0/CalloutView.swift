@@ -8,6 +8,7 @@
 
 import UIKit
 import Firebase
+import CoreLocation
 
 class CalloutView: UIView {
 
@@ -22,8 +23,13 @@ class CalloutView: UIView {
     @IBOutlet weak var upOutlet: UIButton!
     @IBOutlet weak var downOutlet: UIButton!
     @IBOutlet weak var timestampLabel: UILabel!
+    @IBOutlet weak var locationButton: UIButton!
     
+    @IBAction func locationButtonTapped(_ sender: Any) {
+        openMapForPlace()
+    }
     
+
     @IBAction func upTapped(_ sender: AnyObject) {
         
         if downSelected {
@@ -35,14 +41,16 @@ class CalloutView: UIView {
         if upSelected {
             upOutlet.tintColor = UIColor.lightGray
             currLikes -= 1
-            vote(-1)
+            vote(-1, annotation.post.key)
+            updateScore(i: -1)
             annotation.post.upVotes = annotation.post.upVotes - 1
             myVotes[annotation.post.key] = nil
             myVotesRef.child(deviceID).child(annotation.post.key).removeValue()
         } else {
             upOutlet.tintColor = getColor(Int(upvotesLabel.text!)!)
             currLikes += 1
-            vote(1)
+            vote(1, annotation.post.key)
+            updateScore(i: 1)
             annotation.post.upVotes = annotation.post.upVotes + 1
             myVotes[annotation.post.key] = 1
             myVotesRef.child(deviceID).child(annotation.post.key).setValue(1)
@@ -62,14 +70,16 @@ class CalloutView: UIView {
         if downSelected {
             downOutlet.tintColor = UIColor.lightGray
             currLikes += 1
-            vote(1)
+            vote(1, annotation.post.key)
+            updateScore(i: -1)
             annotation.post.upVotes = annotation.post.upVotes + 1
             myVotes[annotation.post.key] = nil
             myVotesRef.child(deviceID).child(annotation.post.key).removeValue()
         } else {
             downOutlet.tintColor = getColor(Int(upvotesLabel.text!)!)
             currLikes -= 1
-            vote(-1)
+            vote(-1, annotation.post.key)
+            updateScore(i: 1)
             annotation.post.upVotes = annotation.post.upVotes - 1
             myVotes[annotation.post.key] = -1
             myVotesRef.child(deviceID).child(annotation.post.key).setValue(-1)
@@ -105,17 +115,34 @@ class CalloutView: UIView {
         }
     }
     
-    func vote(_ i: Int) {
-        allPostsRef.child(annotation.post.key).child("upVotes").runTransactionBlock { (currentData: FIRMutableData) -> FIRTransactionResult in
-            var value = currentData.value as? Int
-            if value == nil {
-                value = 0
-            }
-            currentData.value = value! + i
-            return FIRTransactionResult.success(withValue: currentData)
+    
+    func openMapForPlace() {
+        
+        
+        let latitude:CLLocationDegrees =  annotation.coordinate.latitude
+        let longitude:CLLocationDegrees =  annotation.coordinate.longitude
+        
+        let regionDistance:CLLocationDistance = 10000
+        let coordinates = CLLocationCoordinate2DMake(latitude, longitude)
+        let regionSpan = MKCoordinateRegionMakeWithDistance(coordinates, regionDistance, regionDistance)
+        let options = [
+            MKLaunchOptionsMapCenterKey: NSValue(mkCoordinate: regionSpan.center),
+            MKLaunchOptionsMapSpanKey: NSValue(mkCoordinateSpan: regionSpan.span)
+        ]
+        let placemark = MKPlacemark(coordinate: coordinates, addressDictionary: nil)
+        let mapItem = MKMapItem(placemark: placemark)
+        if self.locationButton.title(for: UIControlState.normal) != nil {
+            mapItem.name = "\(self.locationButton.title(for: UIControlState.normal)!)"
+        } else {
+            mapItem.name = ""
         }
         
+        
+        
+        
+        mapItem.openInMaps(launchOptions: options)
+        
     }
-
+    
 
 }

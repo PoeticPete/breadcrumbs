@@ -12,23 +12,27 @@ import FirebaseDatabase
 
 class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDelegate, UIGestureRecognizerDelegate {
 
-    @IBOutlet weak var refreshButton: UIBarButtonItem!
+    @IBOutlet weak var titleButton: UIButton!
     @IBOutlet weak var map: MKMapView!
+    @IBOutlet weak var refreshButton: UIButton!
+    @IBOutlet weak var activityIndicator: UIActivityIndicatorView!
     
     // declare class variables
     var geofireRef:FIRDatabaseReference!
     var geoFire:GeoFire!
     var manager:CLLocationManager!
-    var currentLocation:CLLocation!
     var flatAnnotationImage:UIImage!
-    var currentLocationName = ""
     var imagePicked:UIImage!
-    var Cloudinary:CLCloudinary!
     var annotation:CustomAnnotation!
     var annotations = [CustomAnnotation]()
     var annotationTuples = [(String,CLLocation)]()
     var selectedView = UIView()
     var clusteredAnnotations = [CustomAnnotation]()
+    var mapRegionSet = false
+    
+    
+    
+    
     
     
     override func viewDidLoad() {
@@ -37,122 +41,64 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         // set class variables
         geofireRef = FIRDatabase.database().reference().child("test")
         geoFire = GeoFire(firebaseRef: geofireRef)
-        map.delegate = self
         setupLocationManager()
         setupAnnotationIconImage()
         getMyVotes()
-        Cloudinary = CLCloudinary(url: "cloudinary://645121525236522:HQ90xZWm0Dt0w2UzIcSLtjhG5CA@dufz2rmju") // get from server
         setupMap()
-        
-    }
-    
-    override func viewWillAppear(_ animated: Bool) {
         getLocalMessages()
+        logSession()
+        
+        NotificationCenter.default.addObserver(self, selector: #selector(ViewController.updateTitle(notification:)), name: Notification.Name("currentScoreUpdated"), object: nil)
+        
     }
     
     
     @IBAction func composeTapped(_ sender: AnyObject) {
         manager.requestLocation()
-        presentAlert(image: nil)
-
-    }
-
-    func presentAlert(image:UIImage?) {
-        let alertViewController = NYAlertViewController()
-        
-        // Set a title and message
-        alertViewController.title = currentLocationName
-        alertViewController.message = ""
-        
-        // Customize appearance as desired
-        alertViewController.buttonCornerRadius = 20.0
-        alertViewController.view.tintColor = self.view.tintColor
-        alertViewController.titleFont = UIFont(name: "AvenirNext-Bold", size: 19.0)
-        alertViewController.messageFont = UIFont(name: "AvenirNext-Medium", size: 16.0)
-        alertViewController.cancelButtonTitleFont = UIFont(name: "AvenirNext-Medium", size: 16.0)
-        alertViewController.cancelButtonTitleFont = UIFont(name: "AvenirNext-Medium", size: 16.0)
-        alertViewController.swipeDismissalGestureEnabled = true
-        alertViewController.backgroundTapDismissalGestureEnabled = true
-        // Add alert actions
-        
-        let photoAction = NYAlertAction(
-            title: "Photo",
-            style: .default,
-            handler: { (action: NYAlertAction?) -> Void in
-                self.dismiss(animated: false, completion: nil)
-                self.presentCamera()
-                
-        })
-        alertViewController.addAction(photoAction)
-        
-        let postAction = NYAlertAction(
-            title: "Post",
-            style: .default,
-            handler: { (action: NYAlertAction?) -> Void in
-                print("OK PRESSED")
-                
-                let textString = (alertViewController.textFields![0] as AnyObject).text!
-                let trimmedString = textString.trimmingCharacters(in: NSCharacterSet.whitespacesAndNewlines)
-                print(trimmedString)
-                if image != nil {
-                    let randomRef = FIRDatabase.database().reference().childByAutoId()
-                    self.uploadToCloudinary(fileId: "\(randomRef.key)")
-                } else if trimmedString == "" {
-                    print("EMPTY")
-                } else {
-//                    let dropPin = CustomAnnotation(coordinate: self.currentLocation.coordinate)
-//                    dropPin.message = trimmedString
-//                    print(self.currentLocation.coordinate)
-                    self.setMessage(loc: self.currentLocation, message: trimmedString)
-                    self.getLocalMessages()
-                }
-                self.dismiss(animated: true, completion: nil)
-        })
-        alertViewController.addAction(postAction)
-        
-        if image != nil {
-            let imageView = UIImageView(image: image)
-            imageView.frame = CGRect(x: 0, y: 0, width: self.view.frame.width * 4/5, height: self.view.frame.height * 4/5)
-            imageView.contentMode = .scaleAspectFit
-            alertViewController.alertViewContentView = imageView
-        }
-        alertViewController.addTextField { (textfield) in
-            textfield?.textColor = UIColor.darkText
-        }
-        
-        self.present(alertViewController, animated: true, completion: nil)
     }
     
-    func presentCamera() {
-        if UIImagePickerController.isSourceTypeAvailable(UIImagePickerControllerSourceType.camera) {
-            var imagePicker = UIImagePickerController()
-            imagePicker.delegate = self
-            imagePicker.sourceType = UIImagePickerControllerSourceType.camera;
-            imagePicker.allowsEditing = false
-            print("presenting imagePicker")
-            self.present(imagePicker, animated: true, completion: nil)
-        } else {
-            print("not available")
+    override func viewWillAppear(_ animated: Bool) {
+        super.viewWillAppear(animated)
+        
+        self.navigationController?.navigationBar.isHidden = true
+        if justPosted == true {
+            getLocalMessages()
+            justPosted = false
         }
         
+        scoreRef.child(deviceID).observeSingleEvent(of: .value, with: {snapshot in
+            if !snapshot.exists() {
+                scoreRef.child(deviceID).setValue(0)
+                currentScore = 0
+                self.titleButton.setTitle("0", for: UIControlState.normal)
+            } else {
+                currentScore = snapshot.value as! Int
+                self.titleButton.setTitle("\(currentScore)", for: UIControlState.normal)
+            }
+            })
     }
+    
+    
     
     func locationManager(_ manager: CLLocationManager, didUpdateLocations locations: [CLLocation]) {
         
         // get region
         let location = locations.last! as CLLocation
         let center = CLLocationCoordinate2D(latitude: location.coordinate.latitude, longitude: location.coordinate.longitude)
-        let region = MKCoordinateRegion(center: center, span: MKCoordinateSpan(latitudeDelta: 0.10, longitudeDelta: 0.10))
+        let region = MKCoordinateRegion(center: center, span: MKCoordinateSpan(latitudeDelta: 0.08, longitudeDelta: 0.08))
         UserDefaults.standard.set(location.coordinate.latitude as NSNumber, forKey: "lastLatitude")
         UserDefaults.standard.set(location.coordinate.longitude as NSNumber, forKey: "lastLongitude")
-        
         currentLocation = location
+        if mapRegionSet == false {
+            map.setRegion(region, animated: true)
+            mapRegionSet = true
+        }
+        
         setCurrentLocationName()
         print("UPDATED \(location)")
     }
 
     func locationManager(_ manager: CLLocationManager, didFailWithError error: Error) {
-        print("failllleeeddd\n")
         print(error)
     }
     
@@ -173,10 +119,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
             // Location name
             if let locationName = placeMark.addressDictionary?["Name"] as? String
             {
-                self.currentLocationName = locationName
+                currentLocationName = locationName
                 UserDefaults.standard.set(locationName, forKey: "lastLocationName")
-//                self.alert.title = locationName
-                
             }
         }
     }
@@ -184,14 +128,26 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     
     // --------------------------ANNOTATIONS--------------------------
     func mapView(_ mapView: MKMapView, didSelect view: MKAnnotationView) {
-        // 1
         if view.annotation is MKUserLocation
         {
             // Don't proceed with custom callout
             return
         }
-        mapView.setCenter((view.annotation?.coordinate)!, animated: true)
         
+        
+        let center = CGPoint(x: view.center.x, y: view.center.y - 2 * (self.navigationController?.navigationBar.frame.size.height)!)
+        print(center)
+        print(view.center)
+        
+        
+        
+        
+//        mapView.setCenter((view.annotation?.coordinate)!, animated: true)
+        UIView.animate(withDuration: 0.5, delay: 0, options: UIViewAnimationOptions.curveEaseInOut, animations: {
+            view.center = self.view.center
+            view.alpha = 0
+//            view.frame.size = CGSize(width: 300, height: 300)
+        }, completion: nil)
         
         annotation = view.annotation as! CustomAnnotation
         
@@ -213,14 +169,40 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
             calloutview.votingView.layer.masksToBounds = true
             calloutview.votingView.isHidden = true
             calloutview.timestampLabel.isHidden = true
+            calloutview.locationButton.isHidden = true
+            calloutview.locationButton.layer.cornerRadius = 10
+            calloutview.locationButton.layer.masksToBounds = true
             
-            let url = "https://res.cloudinary.com/dufz2rmju/\(annotation.post.key!)"
+            CLGeocoder().reverseGeocodeLocation(CLLocation(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude))
+            {
+                (placemarks, error) -> Void in
+                
+                let placeArray = placemarks as [CLPlacemark]!
+                
+                // Place details
+                var placeMark: CLPlacemark!
+                placeMark = placeArray?[0]
+                if placeMark == nil {
+                    return
+                }
+                
+                // Location name
+                if let locationName = placeMark.addressDictionary?["Name"] as? String
+                {
+                    calloutview.locationButton.alpha = 0.0
+                    calloutview.locationButton.setTitle("  \(locationName)  ", for: UIControlState.normal)
+                    UIView.animate(withDuration: 0.2, animations: {
+                        calloutview.locationButton.alpha = 1.0
+                    })
+                    
+                }
+            }
+            
+            let url = annotation.post.mediaURL!
             if let img = getImageFromURL(url) {
                 calloutview.photoView.image = img
-                annotation.post.picture = img
             } else {
                 calloutview.photoView.image = UIImage()
-                annotation.post.picture = UIImage()
             }
 
             if myVotes[annotation.post.key] == 1 {
@@ -256,6 +238,31 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
             calloutview.annotation = annotation
             calloutview.timestampLabel.text = timeAgoSinceDate(date: calloutview.annotation.post.timestamp, numericDates: true)
             
+            CLGeocoder().reverseGeocodeLocation(CLLocation(latitude: annotation.coordinate.latitude, longitude: annotation.coordinate.longitude))
+            {
+                (placemarks, error) -> Void in
+                
+                let placeArray = placemarks as [CLPlacemark]!
+                
+                // Place details
+                var placeMark: CLPlacemark!
+                placeMark = placeArray?[0]
+                if placeMark == nil {
+                    return
+                }
+                
+                // Location name
+                if let locationName = placeMark.addressDictionary?["Name"] as? String
+                {
+                    calloutview.locationButton.alpha = 0.0
+                    calloutview.locationButton.setTitle(locationName, for: UIControlState.normal)
+                    UIView.animate(withDuration: 0.2, animations: {
+                        calloutview.locationButton.alpha = 1.0
+                    })
+                    
+                }
+            }
+            
             if myVotes[annotation.post.key] == 1 {
                 calloutview.upSelected = true
                 calloutview.upOutlet.tintColor = getColor(annotation.post.upVotes!)
@@ -263,23 +270,22 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
                 calloutview.downSelected = true
                 calloutview.downOutlet.tintColor = getColor(annotation.post.upVotes!)
             }
-            //        button.addTarget(self, action: "action:", forControlEvents: UIControlEvents.TouchUpInside)
             
-            //then make a action method :
             
             calloutview.commentsButton.addTarget(self, action: #selector(ViewController.toCrumbTableView), for: UIControlEvents.touchUpInside)
             calloutview.commentsButton.backgroundColor = getColor(annotation.post.upVotes!)
             
-            //        calloutview.center = CGPoint(x: view.bounds.size.width / 2, y: -calloutview.bounds.size.height*0.52)
-            calloutview.center = CGPoint(x: self.view.center.x, y: self.view.center.y*0.67)
+            
             calloutview.alpha = 0.0
             calloutview.backgroundColor = UIColor.white
             calloutview.isUserInteractionEnabled = true
-            
+//            calloutview.center = center
+            calloutview.center = CGPoint(x: self.view.center.x, y: self.view.center.y - calloutview.frame.height/2 - view.frame.height/8)
             
             self.view.addSubview(calloutview)
-            UIView.animate(withDuration: 0.4, animations: {
+            UIView.animate(withDuration: 0.3, animations: {
                 calloutview.alpha = 1.0
+                
             })
         }
 
@@ -291,33 +297,33 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     
     override func prepare(for segue: UIStoryboardSegue, sender: Any?) {
         if segue.identifier == "ShowPostSegue" {
-            var nextVC = segue.destination as! CrumbTableViewController
+            let nextVC = segue.destination as! CrumbTableViewController
             nextVC.annotation = annotation
+            self.navigationController?.navigationBar.isHidden = false
         } else if segue.identifier == "ShowClusterSegue" {
-            var nextVC = segue.destination as! ClusterViewController
-            print("SEGUEING TO CLUSTER TABLE VIEW")
-            print(clusteredAnnotations)
+            let nextVC = segue.destination as! ClusterViewController
             nextVC.clusteredAnnotations = clusteredAnnotations
+            self.navigationController?.navigationBar.isHidden = false
+        } else if segue.identifier == "ShowClusterCollectionSegue" {
+            let nextVC = segue.destination as! ClusterCollectionViewController
+            nextVC.clusteredAnnotations = clusteredAnnotations
+            self.navigationController?.navigationBar.isHidden = false
+        } else if segue.identifier == "myPostsSegue"{
+            self.navigationController?.navigationBar.isHidden = false
+        } else {
+            self.navigationController?.navigationBar.isHidden = true
         }
-        
-        
+
     }
     
     func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
-        for subview in self.view.subviews
-        {
-            clearCallouts()
-            map.selectedAnnotations.removeAll()
-        }
+        clearCallouts()
+        map.selectedAnnotations.removeAll()
     }
     
     func mapView(_ mapView: MKMapView, didDeselect view: MKAnnotationView) {
-        for subview in self.view.subviews
-        {
-            clearCallouts()
-            map.selectedAnnotations.removeAll()
-            
-        }
+        clearCallouts()
+        map.selectedAnnotations.removeAll()
     }
     
     func clearCallouts() {
@@ -340,6 +346,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         for view in views {
             if (view.annotation?.isKind(of: MKUserLocation.self))! {
                 view.canShowCallout = false
+                view.isEnabled = false
             }
         }
     }
@@ -364,16 +371,15 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     }
     
     func startLoadingIndicator() {
-        let activityIndicator = UIActivityIndicatorView(frame: CGRect(x: 0, y: 0, width: 20, height: 20))
-        activityIndicator.color = UIColor.green
-        let barButton = UIBarButtonItem(customView: activityIndicator)
-        self.navigationItem.setLeftBarButton(barButton, animated: true)
+        refreshButton.isHidden = true
+        activityIndicator.isHidden = false
         activityIndicator.startAnimating()
     }
     
     func stopLoadingIndicator() {
-        var barButton = UIBarButtonItem(barButtonSystemItem: UIBarButtonSystemItem.refresh, target: self, action: #selector(ViewController.refreshTapped(_:)))
-        self.navigationItem.setLeftBarButton(barButton, animated: true)
+        refreshButton.isHidden = false
+        activityIndicator.isHidden = true
+        activityIndicator.stopAnimating()
     }
     
     // --------------------------SETUP FUNCTIONS (CALLED IN VIEW DID LOAD)--------------------------
@@ -387,20 +393,24 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         manager.allowsBackgroundLocationUpdates = true
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
+        manager.startMonitoringSignificantLocationChanges()
         manager.requestWhenInUseAuthorization()
         manager.requestAlwaysAuthorization()
         manager.requestLocation()
     }
     
     func setupMap() {
+        map.delegate = self
         map.showsUserLocation = true
-        
+        map.mapType = .satellite
+        map.showsCompass = false
         let tap = UITapGestureRecognizer(target: self, action: #selector(ViewController.mapTapped))
         tap.delegate = self
         self.view.addGestureRecognizer(tap)
         
-        let longGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(ViewController.handleTap(sender:)))
+        let longGestureRecognizer = UILongPressGestureRecognizer(target: self, action: #selector(ViewController.handleLongTap(sender:)))
         longGestureRecognizer.delegate = self
+        longGestureRecognizer.minimumPressDuration = 0.5
         self.view.addGestureRecognizer(longGestureRecognizer)
         
         if UserDefaults.standard.object(forKey: "lastLongitude") != nil && UserDefaults.standard.object(forKey: "lastLatitude") != nil && UserDefaults.standard.object(forKey: "lastLocationName") != nil {
@@ -413,8 +423,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         }
     }
     
-    func handleTap(sender: UILongPressGestureRecognizer) {
-        
+    
+    func handleLongTap(sender: UILongPressGestureRecognizer) {
         if (sender.state == UIGestureRecognizerState.ended) {
             let location = sender.location(in: map)
             let coordinate = map.convert(location,toCoordinateFrom: map)
@@ -446,11 +456,12 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
             clusteredAnnotations = annotationsInRegion
             
             if clusteredAnnotations.count > 0 {
-                self.performSegue(withIdentifier: "ShowClusterSegue", sender: nil)
+                self.performSegue(withIdentifier: "ShowClusterCollectionSegue", sender: nil)
             }
             
             
         } else if (sender.state == UIGestureRecognizerState.began) {
+            orientNorth()
             let location = sender.location(in: map)
             let coordinate = map.convert(location,toCoordinateFrom: map)
             
@@ -510,6 +521,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     
     
     
+    
     // ----------------------Retrieve from Database-------------------------------------------
     func getLocalMessages() {
         print("getting local messages")
@@ -522,8 +534,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         self.annotationTuples.removeAll(keepingCapacity: true)
         startLoadingIndicator()
         let currGeoFire = GeoFire(firebaseRef: currPostsRef)
-        let center = currentLocation
-        let circleQuery = currGeoFire!.query(at: center, withRadius: 100)
+        
+        let circleQuery = currGeoFire!.query(at: currentLocation, withRadius: 1000)
+//        CLLocation(latitude: 42.373222, longitude: -72.519854)
         
         circleQuery!.observe(.keyEntered, with: { snapshot in
             let newTuple = (snapshot.0!, snapshot.1!)
@@ -532,6 +545,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         
         circleQuery?.observeReady({
             var count = 0
+            if self.annotationTuples.count == 0 {
+                self.stopLoadingIndicator()
+            }
             for tuple in self.annotationTuples {
                 allPostsRef.child(tuple.0).observeSingleEvent(of: .value, with: { messageSnap in
                     count += 1
@@ -542,9 +558,13 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
                         var hasPicture = false
                         if messageSnap.childSnapshot(forPath: "hasPicture").exists() {
                             hasPicture = messageSnap.childSnapshot(forPath: "hasPicture").value as! Bool
+                            let mediaURL = messageSnap.childSnapshot(forPath: "mediaURL").value as! String
+                            self.addAnnotationToArray(loc: tuple.1, message: messageSnap.childSnapshot(forPath: "message").value as! String, upVotes: upvotes, key: messageSnap.key, timestamp: date, hasPicture: hasPicture, mediaURL: mediaURL)
+                        } else {
+                            self.addAnnotationToArray(loc: tuple.1, message: messageSnap.childSnapshot(forPath: "message").value as! String, upVotes: upvotes, key: messageSnap.key, timestamp: date, hasPicture: hasPicture)
                         }
                         
-                        self.addAnnotationToArray(loc: tuple.1, message: messageSnap.childSnapshot(forPath: "message").value as! String, upVotes: upvotes, key: messageSnap.key, timestamp: date, hasPicture: hasPicture)
+                        
                         if upvotes > mostUpvotes {
                             mostUpvotes = upvotes
                         }
@@ -575,9 +595,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         myPostsRef.child(randomKey.key).child("timestamp").setValue(firebaseTimeStamp)
     }
     
-    func addAnnotationToArray(loc:CLLocation, message:String, upVotes:Int, key:String, timestamp:NSDate, hasPicture:Bool) {
+    func addAnnotationToArray(loc:CLLocation, message:String, upVotes:Int, key:String, timestamp:NSDate, hasPicture:Bool, mediaURL:String? = nil) {
         let point = CustomAnnotation(coordinate: CLLocationCoordinate2D(latitude: loc.coordinate.latitude, longitude: loc.coordinate.longitude))
-        let newPost = Post(key: key, message: message, upVotes: upVotes, timestamp: timestamp, hasPicture: hasPicture)
+        let newPost = Post(key: key, message: message, upVotes: upVotes, timestamp: timestamp, hasPicture: hasPicture, mediaURL: mediaURL)
         point.post = newPost
         annotations.append(point)
     }
@@ -585,85 +605,29 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     func addAnnotationsToMap() {
         let allAnnotations = self.map.annotations
         self.map.removeAnnotations(allAnnotations)
-        print("this is the number of annotations!")
-        print(self.map.annotations.count)
         for annotation in annotations {
             self.map.addAnnotation(annotation)
         }
     }
     
+    func orientNorth() {
+        map.setUserTrackingMode(MKUserTrackingMode.followWithHeading, animated: true)
+        map.setUserTrackingMode(MKUserTrackingMode.none, animated: false)
+    }
+    
+    func logSession() {
+        logSessionRef.child(deviceID).childByAutoId().setValue(firebaseTimeStamp)
+    }
+    
     @IBAction func refreshTapped(_ sender: AnyObject) {
         getLocalMessages()
     }
+    
+    func updateTitle(notification: Notification) {
+        self.titleButton.setTitle("\(currentScore)", for: UIControlState.normal)
+    }
+    
 
 
 }
-
-
-
-
-
-
-
-// ----------------------------------EXTENSIONS--------------------------------------------------
-
-extension ViewController: UIImagePickerControllerDelegate,
-UINavigationControllerDelegate{
-    func imagePickerController(_ picker: UIImagePickerController, didFinishPickingMediaWithInfo info: [String : Any]) {
-        if let photo = info["UIImagePickerControllerOriginalImage"] as? UIImage {
-            imagePicked = photo
-            print("picked \(photo)")
-        }
-        self.dismiss(animated: true, completion: nil)
-        
-        presentAlert(image: imagePicked)
-    }
-    
-}
-
-extension ViewController: CLUploaderDelegate {
-    
-    func uploadToCloudinary(fileId:String){
-        //        let forUpload = UIImagePNGRepresentation(self.image!)! as Data
-        let forUpload = UIImageJPEGRepresentation(self.imagePicked!, 0.1)! as Data
-        let uploader = CLUploader(Cloudinary, delegate: self)
-        
-        //        uploader?.upload(forUpload, options: ["public_id":fileId])
-        
-        uploader?.upload(forUpload, options: ["public_id":fileId], withCompletion:onCloudinaryCompletion, andProgress:onCloudinaryProgress)
-        
-    }
-    
-    func onCloudinaryCompletion(successResult:[AnyHashable : Any]?, errorResult:String?, code:Int, idContext:Any?) {
-        print(successResult?.values)
-        print(code)
-        print(errorResult)
-        let fileId = successResult?["public_id"] as! String
-        
-        uploadDetailsToServer(fileId: fileId, loc: self.currentLocation)
-    }
-    
-    func uploadDetailsToServer(fileId:String, loc:CLLocation){
-        
-        //        let allPosts = FIRDatabase.database().reference().child("allPosts")
-        //        let myPosts = FIRDatabase.database().reference().child("myPosts")
-        print(fileId)
-        let firebaseTimeStamp = [".sv":"timestamp"]
-        setNewLocation(loc: loc, baseRef: currPostsRef, key: fileId)
-        allPostsRef.child(fileId).child("upVotes").setValue(0)
-        allPostsRef.child(fileId).child("timestamp").setValue(firebaseTimeStamp)
-        allPostsRef.child(fileId).child("hasPicture").setValue(true)
-        allPostsRef.child(fileId).child("message").setValue("picture with ID \(fileId)")
-
-    }
-    
-    func onCloudinaryProgress(bytesWritten:Int, totalBytesWritten:Int, totalBytesExpectedToWrite:Int, idContext:Any?) {
-        //do any progress update you may need
-        print("bytes written: \(bytesWritten)")
-        print("total bytes written \(totalBytesWritten)")
-        print("total bytes expected to write \(totalBytesExpectedToWrite)")
-    }
-    
-}
-
 

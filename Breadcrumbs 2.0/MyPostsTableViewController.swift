@@ -53,41 +53,41 @@ class MyPostsTableViewController: UIViewController, UITableViewDelegate, UITable
     func getMyPostsAndRefresh() {
         print("Getting posts and refreshing")
         nearbyPosts.removeAll()
-        currPostsRef.observeSingleEvent(of: FIRDataEventType.value, with: { snapshot in
-            for child in snapshot.children {
-                let childSnap = child as! FIRDataSnapshot
-                allPostsRef.child(childSnap.key).observeSingleEvent(of: FIRDataEventType.value, with: { postSnap in
-                    var message:String!
-                    var timestamp:NSDate!
-                    var upVotes:Int!
-                    var hasPicture:Bool!
-                    if let m = postSnap.childSnapshot(forPath: "message").value as? String {
-                        message = m
-                    }
-                    if let t = postSnap.childSnapshot(forPath: "timestamp").value as? TimeInterval {
-                        timestamp = NSDate(timeIntervalSince1970: t/1000)
-                    }
-                    if let uv = postSnap.childSnapshot(forPath: "upVotes").value as? Int {
-                        upVotes = uv
-                    }
-                    if postSnap.childSnapshot(forPath: "hasPicture").exists() {
-                        if let hp = postSnap.childSnapshot(forPath: "hasPicture").value as? Bool {
-                            hasPicture = hp
-                        }
-                    } else {
-                        hasPicture = false
-                    }
-                    //                    print("\(message) \(timestamp) \(upVotes) \(hasPicture)")
-                    
-                    if message != nil && timestamp != nil && upVotes != nil && hasPicture != nil {
-                        var newPost = Post(key: childSnap.key, message: message, upVotes: upVotes, timestamp: timestamp, hasPicture: hasPicture)
-                        self.nearbyPosts.append(newPost)
-                        self.crumbsTableView.reloadData()
-                    }
-                })
-                
-            }
-        })
+//        currPostsRef.observeSingleEvent(of: FIRDataEventType.value, with: { snapshot in
+//            for child in snapshot.children {
+//                let childSnap = child as! FIRDataSnapshot
+//                allPostsRef.child(childSnap.key).observeSingleEvent(of: FIRDataEventType.value, with: { postSnap in
+//                    var message:String!
+//                    var timestamp:NSDate!
+//                    var upVotes:Int!
+//                    var hasPicture:Bool!
+//                    if let m = postSnap.childSnapshot(forPath: "message").value as? String {
+//                        message = m
+//                    }
+//                    if let t = postSnap.childSnapshot(forPath: "timestamp").value as? TimeInterval {
+//                        timestamp = NSDate(timeIntervalSince1970: t/1000)
+//                    }
+//                    if let uv = postSnap.childSnapshot(forPath: "upVotes").value as? Int {
+//                        upVotes = uv
+//                    }
+//                    if postSnap.childSnapshot(forPath: "hasPicture").exists() {
+//                        if let hp = postSnap.childSnapshot(forPath: "hasPicture").value as? Bool {
+//                            hasPicture = hp
+//                        }
+//                    } else {
+//                        hasPicture = false
+//                    }
+//                    //                    print("\(message) \(timestamp) \(upVotes) \(hasPicture)")
+//                    
+//                    if message != nil && timestamp != nil && upVotes != nil && hasPicture != nil {
+//                        var newPost = Post(key: childSnap.key, message: message, upVotes: upVotes, timestamp: timestamp, hasPicture: hasPicture)
+//                        self.nearbyPosts.append(newPost)
+//                        self.crumbsTableView.reloadData()
+//                    }
+//                })
+//                
+//            }
+//        })
     }
     
     func scrollViewDidScroll(_ scrollView: UIScrollView) {
@@ -192,7 +192,7 @@ class MyPostsTableViewController: UIViewController, UITableViewDelegate, UITable
         cell.changeLocation(newLocation: "Some GPS Coordinates or location name that the person put in")
         cell.changeScore(newScore: nearbyPosts[indexPath.row].upVotes)
         if(nearbyPosts[indexPath.row].hasPicture == true){
-            cell.changeIMG(newIMG: getImageFromURL(cloudinaryBaseURL + nearbyPosts[indexPath.row].key)!)
+            cell.changeIMG(newIMG: getImageFromURL(nearbyPosts[indexPath.row].mediaURL!)!)
         }
         else{
             //move the text to the left

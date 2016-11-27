@@ -11,6 +11,7 @@ import Firebase
 
 class CrumbTableViewController: UIViewController, UITableViewDelegate, UITableViewDataSource, UITextViewDelegate {
 
+    @IBOutlet weak var keyboardHeightLayoutConstraint: NSLayoutConstraint!
     @IBOutlet weak var table: UITableView!
     var annotation:CustomAnnotation!
     var comments = [Comment]()
@@ -21,7 +22,9 @@ class CrumbTableViewController: UIViewController, UITableViewDelegate, UITableVi
     
     override func viewDidLoad() {
         super.viewDidLoad()
-        NotificationCenter.default.addObserver(self, selector: #selector(CrumbTableViewController.keyboardWillShow(notification:)), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
+        NotificationCenter.default.addObserver(self, selector: #selector(CrumbTableViewController.keyboardNotification(notification:)), name: NSNotification.Name.UIKeyboardWillChangeFrame, object: nil)
+        
+//        NotificationCenter.default.addObserver(self, selector: #selector(CrumbTableViewController.keyboardWillShow(notification:)), name: NSNotification.Name.UIKeyboardWillShow, object: nil)
         getComments()
         print(annotation)
     }
@@ -56,10 +59,13 @@ class CrumbTableViewController: UIViewController, UITableViewDelegate, UITableVi
     func tableView(_ tableView: UITableView, heightForRowAt indexPath: IndexPath) -> CGFloat {
         
         if annotation.post.hasPicture == true {
-            let w = Double(annotation.post.picture!.size.width)
-            let h = Double(annotation.post.picture!.size.height)
-            if indexPath.row == 0 && w < h {
-                return 400.0
+
+            if indexPath.row == 0 {
+                if let img = getImageFromURL(annotation.post.mediaURL!) {
+                    return UIScreen.main.bounds.width * img.size.height / img.size.width
+                } else {
+                    return 100
+                }
             } else if indexPath.row == comments.count + 1 {
                 return 130.0
             }
@@ -81,7 +87,8 @@ class CrumbTableViewController: UIViewController, UITableViewDelegate, UITableVi
     func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         if annotation.post.hasPicture == true && indexPath.row == 0 {
             let cell = table.dequeueReusableCell(withIdentifier: "PhotoCrumbCell") as! PhotoCrumbTableViewCell
-            cell.photo.image = annotation.post.picture
+            cell.photo.image = getImageFromURL(annotation.post.mediaURL!)
+            
             cell.timestampLabel.text = "  " + timeAgoSinceDate(date: annotation.post.timestamp, numericDates: true) + "  "
             cell.annotation = self.annotation
             cell.upvotesLabel.text = "\(annotation.post.upVotes!)"
@@ -177,26 +184,26 @@ class CrumbTableViewController: UIViewController, UITableViewDelegate, UITableVi
         self.view.endEditing(true)
     }
     
-    func moveTable(height: CGFloat, up: Bool)
-    {
-        let movementDistance:CGFloat = -180
-        let movementDuration: Double = 0.3
-        
-        var movement:CGFloat = 0
-        if up
-        {
-            movement = movementDistance
-        }
-        else
-        {
-            movement = -movementDistance
-        }
-        UIView.beginAnimations("animateTextField", context: nil)
-        UIView.setAnimationBeginsFromCurrentState(true)
-        UIView.setAnimationDuration(movementDuration)
-        self.view.frame = self.view.frame.offsetBy(dx: 0, dy: movement)
-        UIView.commitAnimations()
-    }
+//    func moveTable(height: CGFloat, up: Bool)
+//    {
+//        let movementDistance:CGFloat = -180
+//        let movementDuration: Double = 0.3
+//        
+//        var movement:CGFloat = 0
+//        if up
+//        {
+//            movement = movementDistance
+//        }
+//        else
+//        {
+//            movement = -movementDistance
+//        }
+//        UIView.beginAnimations("animateTextField", context: nil)
+//        UIView.setAnimationBeginsFromCurrentState(true)
+//        UIView.setAnimationDuration(movementDuration)
+//        self.view.frame = self.view.frame.offsetBy(dx: 0, dy: movement)
+//        UIView.commitAnimations()
+//    }
     
     
     func textViewDidBeginEditing(_ textView: UITextView) {
@@ -215,7 +222,7 @@ class CrumbTableViewController: UIViewController, UITableViewDelegate, UITableVi
             textView.text = "New comment"
             textView.textColor = UIColor.lightGray
         }
-        self.moveTable(height: keyboardHeight, up:false)
+//        self.moveTable(height: keyboardHeight, up:false)
     }
 
     func textView(_ textView: UITextView, shouldChangeTextIn range: NSRange, replacementText text: String) -> Bool {
@@ -230,24 +237,60 @@ class CrumbTableViewController: UIViewController, UITableViewDelegate, UITableVi
         return numberOfChars < 141;
     }
     
-    func keyboardWillShow(notification:NSNotification) {
-        if keyboardVisible == false {
-            keyboardVisible = true
-            let userInfo:NSDictionary = notification.userInfo! as NSDictionary
-            let keyboardFrame:NSValue = userInfo.value(forKey: UIKeyboardFrameEndUserInfoKey) as! NSValue
-            let keyboardRectangle = keyboardFrame.cgRectValue
-            let keyboardHeight = keyboardRectangle.height
-            print(keyboardHeight)
-            self.keyboardHeight = keyboardHeight
-            self.moveTable(height: keyboardHeight, up: true)
+    deinit {
+        NotificationCenter.default.removeObserver(self)
+    }
+    
+    func keyboardNotification(notification: NSNotification) {
+        if let userInfo = notification.userInfo {
+            
+
+            let endFrame = (userInfo[UIKeyboardFrameEndUserInfoKey] as? NSValue)?.cgRectValue
+            let duration:TimeInterval = (userInfo[UIKeyboardAnimationDurationUserInfoKey] as? NSNumber)?.doubleValue ?? 0
+            let animationCurveRawNSN = userInfo[UIKeyboardAnimationCurveUserInfoKey] as? NSNumber
+            let animationCurveRaw = animationCurveRawNSN?.uintValue ?? UIViewAnimationOptions.curveEaseInOut.rawValue
+            let animationCurve:UIViewAnimationOptions = UIViewAnimationOptions(rawValue: animationCurveRaw)
+            if (endFrame?.origin.y)! >= UIScreen.main.bounds.size.height {
+                self.keyboardHeightLayoutConstraint?.constant = 0.0
+            } else {
+                self.keyboardHeightLayoutConstraint?.constant = endFrame?.size.height ?? 0.0
+            }
+            print(self.keyboardHeightLayoutConstraint)
+            
+            self.table.layoutIfNeeded()
+            scrollToBottom()
+//            UIView.animate(withDuration: duration,
+//                           delay: TimeInterval(0),
+//                           options: animationCurve,
+//                           animations: { self.table.layoutIfNeeded()
+//            },
+//                           completion: nil)
+
         }
     }
     
-
-    func scrollViewWillBeginDragging(_ scrollView: UIScrollView) {
-        self.view.endEditing(true)
-
+    func scrollToBottom() {
+        let numberOfRows = self.table.numberOfRows(inSection: 0)
+        if numberOfRows > 0 {
+            let indexPath = IndexPath(row: numberOfRows-1, section: 0)
+            self.table.scrollToRow(at: indexPath, at: UITableViewScrollPosition.bottom, animated: false)
+        }
     }
+    
+//    func keyboardWillShow(notification:NSNotification) {
+//        if keyboardVisible == false {
+//            keyboardVisible = true
+//            let userInfo:NSDictionary = notification.userInfo! as NSDictionary
+//            let keyboardFrame:NSValue = userInfo.value(forKey: UIKeyboardFrameEndUserInfoKey) as! NSValue
+//            let keyboardRectangle = keyboardFrame.cgRectValue
+//            let keyboardHeight = keyboardRectangle.height
+//            print(keyboardHeight)
+//            self.keyboardHeight = keyboardHeight
+//            self.moveTable(height: keyboardHeight, up: true)
+//        }
+//    }
+    
+
 
     
 

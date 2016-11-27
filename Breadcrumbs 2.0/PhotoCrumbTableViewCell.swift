@@ -33,14 +33,16 @@ class PhotoCrumbTableViewCell: UITableViewCell {
         if upSelected {
             upOutlet.tintColor = UIColor.lightGray
             currLikes -= 1
-            vote(-1)
+            vote(-1, annotation.post.key)
+            updateScore(i: -1)
             annotation.post.upVotes = annotation.post.upVotes - 1
             myVotes[annotation.post.key] = nil
             myVotesRef.child(deviceID).child(annotation.post.key).removeValue()
         } else {
             upOutlet.tintColor = getColor(Int(upvotesLabel.text!)!)
             currLikes += 1
-            vote(1)
+            vote(1, annotation.post.key)
+            updateScore(i: 1)
             annotation.post.upVotes = annotation.post.upVotes + 1
             myVotes[annotation.post.key] = 1
             myVotesRef.child(deviceID).child(annotation.post.key).setValue(1)
@@ -60,14 +62,16 @@ class PhotoCrumbTableViewCell: UITableViewCell {
         if downSelected {
             downOutlet.tintColor = UIColor.lightGray
             currLikes += 1
-            vote(1)
+            vote(1, annotation.post.key)
+            updateScore(i: -1)
             annotation.post.upVotes = annotation.post.upVotes + 1
             myVotes[annotation.post.key] = nil
             myVotesRef.child(deviceID).child(annotation.post.key).removeValue()
         } else {
             downOutlet.tintColor = getColor(Int(upvotesLabel.text!)!)
             currLikes -= 1
-            vote(-1)
+            vote(-1, annotation.post.key)
+            updateScore(i: 1)
             annotation.post.upVotes = annotation.post.upVotes - 1
             myVotes[annotation.post.key] = -1
             myVotesRef.child(deviceID).child(annotation.post.key).setValue(-1)
@@ -130,18 +134,6 @@ class PhotoCrumbTableViewCell: UITableViewCell {
         if !upSelected {
             upTapped(upOutlet)
         }
-    }
-
-    func vote(_ i: Int) {
-        allPostsRef.child(annotation.post.key).child("upVotes").runTransactionBlock { (currentData: FIRMutableData) -> FIRTransactionResult in
-            var value = currentData.value as? Int
-            if value == nil {
-                value = 0
-            }
-            currentData.value = value! + i
-            return FIRTransactionResult.success(withValue: currentData)
-        }
-        
     }
 
 }

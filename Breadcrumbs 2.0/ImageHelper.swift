@@ -11,7 +11,6 @@
 
 func getImageFromURL(_ urlString:String) -> UIImage? {
     if let image = loadImageFromPath(path: getStoragePath(urlString)) {
-        print("loaded image")
         return image
     } else {
         let url = URL(string: urlString)

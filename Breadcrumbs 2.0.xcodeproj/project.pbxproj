@@ -45,6 +45,12 @@
 		86BD85441DBA857E00A6DF6D /* libCloudinary.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 86BD85431DBA857E00A6DF6D /* libCloudinary.a */; };
 		86D67EAD1DD95AF4008E2C30 /* ClusterViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D67EAC1DD95AF4008E2C30 /* ClusterViewController.swift */; };
 		86D67EB11DD95D55008E2C30 /* ClusterTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D67EB01DD95D55008E2C30 /* ClusterTableViewCell.swift */; };
+		86D67EB41DD984C1008E2C30 /* PhotoClusterTableViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D67EB31DD984C1008E2C30 /* PhotoClusterTableViewCell.swift */; };
+		86D67EB81DD99882008E2C30 /* ClusterCollectionViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D67EB71DD99882008E2C30 /* ClusterCollectionViewController.swift */; };
+		86D67EBA1DD99922008E2C30 /* TextClusterCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D67EB91DD99922008E2C30 /* TextClusterCollectionViewCell.swift */; };
+		86D67EBC1DD99CFE008E2C30 /* PhotoCollectionViewCell.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86D67EBB1DD99CFE008E2C30 /* PhotoCollectionViewCell.swift */; };
+		86ED3A651DDA576A00756D33 /* PostViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86ED3A641DDA576A00756D33 /* PostViewController.swift */; };
+		86ED3A6B1DDAA8D700756D33 /* DIImageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 86ED3A6A1DDAA8D700756D33 /* DIImageView.swift */; };
 		F7188C827BAC42986DE1B3D1 /* Pods_Breadcrumbs_2_0.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = DE22450085868D298AAAE23F /* Pods_Breadcrumbs_2_0.framework */; };
 /* End PBXBuildFile section */
 
@@ -109,6 +115,12 @@
 		86BD854A1DBA85A200A6DF6D /* CLUploader.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = CLUploader.h; sourceTree = "<group>"; };
 		86D67EAC1DD95AF4008E2C30 /* ClusterViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ClusterViewController.swift; sourceTree = "<group>"; };
 		86D67EB01DD95D55008E2C30 /* ClusterTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ClusterTableViewCell.swift; sourceTree = "<group>"; };
+		86D67EB31DD984C1008E2C30 /* PhotoClusterTableViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoClusterTableViewCell.swift; sourceTree = "<group>"; };
+		86D67EB71DD99882008E2C30 /* ClusterCollectionViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = ClusterCollectionViewController.swift; sourceTree = "<group>"; };
+		86D67EB91DD99922008E2C30 /* TextClusterCollectionViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = TextClusterCollectionViewCell.swift; sourceTree = "<group>"; };
+		86D67EBB1DD99CFE008E2C30 /* PhotoCollectionViewCell.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PhotoCollectionViewCell.swift; sourceTree = "<group>"; };
+		86ED3A641DDA576A00756D33 /* PostViewController.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = PostViewController.swift; sourceTree = "<group>"; };
+		86ED3A6A1DDAA8D700756D33 /* DIImageView.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = DIImageView.swift; sourceTree = "<group>"; };
 		DE22450085868D298AAAE23F /* Pods_Breadcrumbs_2_0.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; includeInIndex = 0; path = Pods_Breadcrumbs_2_0.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 /* End PBXFileReference section */
 
@@ -177,8 +189,8 @@
 				865FC1DB1DC45A1E00875ECC /* CommentTableViewCell.swift */,
 				865FC1D91DC455AD00875ECC /* PhotoCrumbTableViewCell.swift */,
 				865FC1D71DC4514A00875ECC /* CrumbTableViewCell.swift */,
-				865FC1D51DC44EF100875ECC /* CrumbTableViewController.swift */,
 				86A0BCCC1DC6CC04005B3ADB /* Comment.swift */,
+				865FC1D51DC44EF100875ECC /* CrumbTableViewController.swift */,
 			);
 			name = CrumbTableView;
 			sourceTree = "<group>";
@@ -227,7 +239,11 @@
 		86734D011DB1771900195E42 /* Breadcrumbs 2.0 */ = {
 			isa = PBXGroup;
 			children = (
+				86ED3A6A1DDAA8D700756D33 /* DIImageView.swift */,
+				86D67EB71DD99882008E2C30 /* ClusterCollectionViewController.swift */,
 				86734D061DB1771900195E42 /* Main.storyboard */,
+				86D67EBB1DD99CFE008E2C30 /* PhotoCollectionViewCell.swift */,
+				86D67EB91DD99922008E2C30 /* TextClusterCollectionViewCell.swift */,
 				86734D0B1DB1771900195E42 /* LaunchScreen.storyboard */,
 				86734D091DB1771900195E42 /* Assets.xcassets */,
 				86734D021DB1771900195E42 /* AppDelegate.swift */,
@@ -237,6 +253,7 @@
 				865FC1DD1DC45F2100875ECC /* CrumbTableView */,
 				865FC1DE1DC45F3400875ECC /* Profile table view */,
 				865FC1E91DC662F100875ECC /* Post.swift */,
+				86ED3A641DDA576A00756D33 /* PostViewController.swift */,
 				86734D041DB1771900195E42 /* ViewController.swift */,
 				864361641DB572BD00F3E6C0 /* Extensions.swift */,
 				864361661DB57C0E00F3E6C0 /* Global.swift */,
@@ -284,6 +301,7 @@
 		86D67EB21DD98304008E2C30 /* Cluster Table */ = {
 			isa = PBXGroup;
 			children = (
+				86D67EB31DD984C1008E2C30 /* PhotoClusterTableViewCell.swift */,
 				86D67EB01DD95D55008E2C30 /* ClusterTableViewCell.swift */,
 				86D67EAC1DD95AF4008E2C30 /* ClusterViewController.swift */,
 			);
@@ -423,19 +441,24 @@
 				86734D051DB1771900195E42 /* ViewController.swift in Sources */,
 				8643615F1DB5679600F3E6C0 /* CustomAnnotation.swift in Sources */,
 				86A0BCCF1DC6CD61005B3ADB /* NewCommentTableViewCell.swift in Sources */,
+				86D67EB41DD984C1008E2C30 /* PhotoClusterTableViewCell.swift in Sources */,
 				86D67EAD1DD95AF4008E2C30 /* ClusterViewController.swift in Sources */,
 				1F69D24B1DB7F7B100E54536 /* ProfileTableViewCell.swift in Sources */,
 				865FC1E31DC65F0100875ECC /* MyPostsTableViewController.swift in Sources */,
+				86ED3A651DDA576A00756D33 /* PostViewController.swift in Sources */,
 				865FC1DC1DC45A1E00875ECC /* CommentTableViewCell.swift in Sources */,
+				86D67EBA1DD99922008E2C30 /* TextClusterCollectionViewCell.swift in Sources */,
 				865FC1E51DC65F7500875ECC /* MyTextPostTableViewCell.swift in Sources */,
 				864361631DB56B8800F3E6C0 /* CalloutView.swift in Sources */,
 				865FC1D01DC4319500875ECC /* PhotoCalloutView.swift in Sources */,
+				86D67EB81DD99882008E2C30 /* ClusterCollectionViewController.swift in Sources */,
 				865FC1EA1DC662F100875ECC /* Post.swift in Sources */,
 				1F8257B51DB6B00100CA8E51 /* ProfileViewController.swift in Sources */,
 				865FC1E71DC65F8700875ECC /* MyPhotoPostTableViewCell.swift in Sources */,
 				86734D651DB1B76000195E42 /* GFGeoHash.m in Sources */,
 				860E53B21DC39E5A00B07CFB /* NYAlertView.m in Sources */,
 				86734D031DB1771900195E42 /* AppDelegate.swift in Sources */,
+				86D67EBC1DD99CFE008E2C30 /* PhotoCollectionViewCell.swift in Sources */,
 				86734D631DB1B76000195E42 /* GeoFire.m in Sources */,
 				8643615B1DB544E600F3E6C0 /* AnnotationView.swift in Sources */,
 				864361671DB57C0E00F3E6C0 /* Global.swift in Sources */,
@@ -444,6 +467,7 @@
 				86734D661DB1B76000195E42 /* GFGeoHashQuery.m in Sources */,
 				86A0BCCD1DC6CC04005B3ADB /* Comment.swift in Sources */,
 				864361651DB572BD00F3E6C0 /* Extensions.swift in Sources */,
+				86ED3A6B1DDAA8D700756D33 /* DIImageView.swift in Sources */,
 				865FC1D61DC44EF100875ECC /* CrumbTableViewController.swift in Sources */,
 				860E53B31DC39E5A00B07CFB /* NYAlertViewController.m in Sources */,
 				86734D671DB1B76000195E42 /* GFQuery.m in Sources */,

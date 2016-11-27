@@ -187,7 +187,7 @@ class ProfileViewController: UIViewController, UITableViewDelegate, UITableViewD
         cell.changeLocation(newLocation: "Some GPS Coordinates or location name that the person put in")
         cell.changeScore(newScore: myPosts[indexPath.row].upVotes)
         if(myPosts[indexPath.row].hasPicture == true){
-            cell.changeIMG(newIMG: myPosts[indexPath.row].picture!)
+            cell.changeIMG(newIMG: getImageFromURL(myPosts[indexPath.row].mediaURL!)!)
         }
         return cell
     }
