@@ -1,0 +1,9 @@
+TO-DO LIST (MIKE):
+-add "start route" feature where user can start tracking a route
+-private/public breadcrumbs
+-"my crumbs" screen
+-add views counter - hidden to user, but count how many times it loads / is tapped on
+    -(good to show to businesses)
+-add an implementation for sponsored breadcrumbs that don't disappear
+-add a "deterioration" factor to the breadcrumbs - have them disappear at a rate that is related to number of upvotes
+-
