@@ -54,7 +54,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     
     
     @IBAction func composeTapped(_ sender: AnyObject) {
-        manager.requestLocation()
+//        manager.requestLocation()
     }
     
     override func viewWillAppear(_ animated: Bool) {
@@ -136,23 +136,15 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         
         
         let center = CGPoint(x: view.center.x, y: view.center.y - 2 * (self.navigationController?.navigationBar.frame.size.height)!)
-        print(center)
-        print(view.center)
         
+        mapView.setCenter((view.annotation?.coordinate)!, animated: true)
         
-        
-        
-//        mapView.setCenter((view.annotation?.coordinate)!, animated: true)
-        UIView.animate(withDuration: 0.5, delay: 0, options: UIViewAnimationOptions.curveEaseInOut, animations: {
-            view.center = self.view.center
-            view.alpha = 0
-//            view.frame.size = CGSize(width: 300, height: 300)
-        }, completion: nil)
         
         annotation = view.annotation as! CustomAnnotation
         
         if annotation.post.hasPicture == true {
-            print("THIS VIEW HAS A PICTURE")
+            
+            
             let views = Bundle.main.loadNibNamed("PhotoCallout", owner: self, options: nil)
             let calloutview = views![0] as! PhotoCalloutView
             calloutview.layer.cornerRadius = 20
@@ -216,7 +208,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
             calloutview.commentsButton.addTarget(self, action: #selector(ViewController.toCrumbTableView), for: UIControlEvents.touchUpInside)
             calloutview.commentsButton.backgroundColor = getColor(annotation.post.upVotes!)
             
-            calloutview.center = CGPoint(x: self.view.center.x, y: self.view.center.y*0.67)
+            
+            calloutview.frame = CGRect(x: 0, y: 0, width: UIScreen.main.bounds.width * 7/10, height: UIScreen.main.bounds.height * 7/10)
+            calloutview.center = self.view.center
             calloutview.alpha = 0.0
             calloutview.backgroundColor = UIColor.white
             calloutview.isUserInteractionEnabled = true
@@ -318,25 +312,33 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     
     func mapView(_ mapView: MKMapView, regionWillChangeAnimated animated: Bool) {
         clearCallouts()
+        print("clear callouts called a")
         map.selectedAnnotations.removeAll()
     }
     
     func mapView(_ mapView: MKMapView, didDeselect view: MKAnnotationView) {
         clearCallouts()
+        
+        print("clear callouts called b")
         map.selectedAnnotations.removeAll()
     }
     
     func clearCallouts() {
         for subview in self.view.subviews
         {
-            if subview.isKind(of: CalloutView.self) || subview.isKind(of: PhotoCalloutView.self){
-                subview.removeFromSuperview()
-
-//                UIView.animate(withDuration: 1.0, animations: {
-//                    subview.alpha = 0.0
-//                    }, completion: { void in
-//                        subview.removeFromSuperview()
-//                })
+            if subview.isKind(of: CalloutView.self) {
+                UIView.animate(withDuration: 0.2, animations: {
+                    subview.alpha = 0.0
+                    }, completion: { void in
+                        subview.removeFromSuperview()
+                })
+            } else if subview.isKind(of: PhotoCalloutView.self) {
+                
+                UIView.animate(withDuration: 0.2, animations: {
+                    subview.alpha = 0.0
+                }, completion: { void in
+                    subview.removeFromSuperview()
+                })
             }
             
         }
@@ -364,7 +366,20 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
             annotationView?.annotation = annotation
         }
         let thisAnnotation = annotation as! CustomAnnotation
-        annotationView!.image = flatAnnotationImage.imageWithColor(color1: getColor(thisAnnotation.post.upVotes))
+        if thisAnnotation.post.hasPicture == true {
+            annotationView?.image = getImageFromURL(thisAnnotation.post.smallMediaURL!)
+            annotationView?.bounds = CGRect(x: (annotationView?.bounds.minX)!, y: (annotationView?.bounds.minY)!, width: 40, height: 40)
+            annotationView?.clipsToBounds = true
+            annotationView?.contentMode = UIViewContentMode.scaleAspectFill
+            annotationView?.layer.cornerRadius = (annotationView?.bounds.width)!/2
+            annotationView?.layer.borderWidth = 1
+            annotationView?.layer.borderColor = getColor(thisAnnotation.post.upVotes).cgColor
+        } else {
+            annotationView!.image = flatAnnotationImage.imageWithColor(color1: getColor(thisAnnotation.post.upVotes))
+            annotationView?.layer.borderWidth = 0
+            annotationView?.layer.cornerRadius = 0
+        }
+//
 
         
         return annotationView
@@ -393,10 +408,11 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         manager.allowsBackgroundLocationUpdates = true
         manager.delegate = self
         manager.desiredAccuracy = kCLLocationAccuracyBest
-        manager.startMonitoringSignificantLocationChanges()
+        manager.pausesLocationUpdatesAutomatically = true
         manager.requestWhenInUseAuthorization()
         manager.requestAlwaysAuthorization()
-        manager.requestLocation()
+//        manager.requestLocation()
+        manager.startUpdatingLocation()
     }
     
     func setupMap() {
@@ -501,13 +517,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
 
     
     func mapTapped(sender: UITapGestureRecognizer? = nil) {
-        print("tapped map")
-        
-        for subview in self.view.subviews
-        {
-            clearCallouts()
-            map.selectedAnnotations.removeAll()
-        }
+        clearCallouts()
+        map.selectedAnnotations.removeAll()
         
     }
     
@@ -536,6 +547,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         let currGeoFire = GeoFire(firebaseRef: currPostsRef)
         
         let circleQuery = currGeoFire!.query(at: currentLocation, withRadius: 1000)
+//        let circleQuery = currGeoFire!.query(at: CLLocation(latitude: 42.373222, longitude: -72.519854), withRadius: 1000)
 //        CLLocation(latitude: 42.373222, longitude: -72.519854)
         
         circleQuery!.observe(.keyEntered, with: { snapshot in
@@ -559,7 +571,8 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
                         if messageSnap.childSnapshot(forPath: "hasPicture").exists() {
                             hasPicture = messageSnap.childSnapshot(forPath: "hasPicture").value as! Bool
                             let mediaURL = messageSnap.childSnapshot(forPath: "mediaURL").value as! String
-                            self.addAnnotationToArray(loc: tuple.1, message: messageSnap.childSnapshot(forPath: "message").value as! String, upVotes: upvotes, key: messageSnap.key, timestamp: date, hasPicture: hasPicture, mediaURL: mediaURL)
+                            let smallMediaURL = messageSnap.childSnapshot(forPath: "smallMediaURL").value as! String
+                            self.addAnnotationToArray(loc: tuple.1, message: messageSnap.childSnapshot(forPath: "message").value as! String, upVotes: upvotes, key: messageSnap.key, timestamp: date, hasPicture: hasPicture, mediaURL: mediaURL, smallMediaURL: smallMediaURL)
                         } else {
                             self.addAnnotationToArray(loc: tuple.1, message: messageSnap.childSnapshot(forPath: "message").value as! String, upVotes: upvotes, key: messageSnap.key, timestamp: date, hasPicture: hasPicture)
                         }
@@ -584,8 +597,7 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
     
     func setMessage(loc:CLLocation, message:String) {
         let randomKey = FIRDatabase.database().reference().childByAutoId()
-        
-        
+
         setNewLocation(loc: loc, baseRef: currPostsRef, key: randomKey.key)
         allPostsRef.child(randomKey.key).child("message").setValue(message)
         allPostsRef.child(randomKey.key).child("upVotes").setValue(0)
@@ -595,9 +607,9 @@ class ViewController: UIViewController, CLLocationManagerDelegate, MKMapViewDele
         myPostsRef.child(randomKey.key).child("timestamp").setValue(firebaseTimeStamp)
     }
     
-    func addAnnotationToArray(loc:CLLocation, message:String, upVotes:Int, key:String, timestamp:NSDate, hasPicture:Bool, mediaURL:String? = nil) {
+    func addAnnotationToArray(loc:CLLocation, message:String, upVotes:Int, key:String, timestamp:NSDate, hasPicture:Bool, mediaURL:String? = nil, smallMediaURL:String? = nil) {
         let point = CustomAnnotation(coordinate: CLLocationCoordinate2D(latitude: loc.coordinate.latitude, longitude: loc.coordinate.longitude))
-        let newPost = Post(key: key, message: message, upVotes: upVotes, timestamp: timestamp, hasPicture: hasPicture, mediaURL: mediaURL)
+        let newPost = Post(key: key, message: message, upVotes: upVotes, timestamp: timestamp, hasPicture: hasPicture, mediaURL: mediaURL, smallMediaURL: smallMediaURL)
         point.post = newPost
         annotations.append(point)
     }

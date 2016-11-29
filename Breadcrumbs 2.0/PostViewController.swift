@@ -18,8 +18,9 @@ class PostViewController: UIViewController, UITextViewDelegate {
     
     
     var imagePicked:UIImage!
-    var Cloudinary:CLCloudinary!
     let placeHolderText = "What's cooking, good looking?"
+    var photoLocation = currentLocation
+    var photoLocationName = currentLocationName
     
     @IBOutlet weak var keyboardHeightLayoutConstraint: NSLayoutConstraint!
     @IBOutlet weak var textView: UITextView!
@@ -32,28 +33,41 @@ class PostViewController: UIViewController, UITextViewDelegate {
             imagePicked = UIImage.imageFromLayer(layer: newLayer)
             let randomRef = FIRDatabase.database().reference().childByAutoId().key
             let data = UIImageJPEGRepresentation(imagePicked, 0.5)
+            let smallData = UIImageJPEGRepresentation(resizeImage(image: imagePicked, newWidth: 50.0), 0.8)
             
-            let riversRef = imagesRef.child("\(randomRef).jpg")
+            let saveLocation = imagesRef.child("\(randomRef).jpg")
+            let smallSaveLocation = smallImagesRef.child("\(randomRef).jpg")
             
-            let uploadTask = riversRef.put(data!, metadata: nil) { metadata, error in
+            let uploadTask = saveLocation.put(data!, metadata: nil) { metadata, error in
                 if (error != nil) {
                     // Uh-oh, an error occurred!
                 } else {
-                    // Metadata contains file metadata such as size, content-type, and download URL.
-                    let downloadURL = metadata!.downloadURL
-                    print("this is the url for downloads")
-                    setNewLocation(loc: currentLocation, baseRef: currPostsRef, key: randomRef)
-                    allPostsRef.child(randomRef).child("upVotes").setValue(0)
-                    allPostsRef.child(randomRef).child("timestamp").setValue(firebaseTimeStamp)
-                    allPostsRef.child(randomRef).child("hasPicture").setValue(true)
-                    allPostsRef.child(randomRef).child("mediaURL").setValue(downloadURL()!.absoluteString)
-                    allPostsRef.child(randomRef).child("message").setValue("picture with ID \(randomRef)")
-                    allPostsRef.child(randomRef).child("locationName").setValue(currentLocationName)
-                    myPostsRef.child(randomRef).child("timestamp").setValue(firebaseTimeStamp)
-                    updateScore(i: 2)
-                    justPosted = true
+                    
+                    let smallUploadTask = smallSaveLocation.put(smallData!, metadata: nil) { smallMetadata, error in
+                        if (error != nil) {
+                            // Uh-oh, an error occurred!
+                        } else {
+                            let downloadURL = metadata!.downloadURL
+                            let smallDownloadURL = smallMetadata!.downloadURL
+                            print("this is the url for downloads")
+                            setNewLocation(loc: self.photoLocation, baseRef: currPostsRef, key: randomRef)
+                            allPostsRef.child(randomRef).child("upVotes").setValue(0)
+                            allPostsRef.child(randomRef).child("timestamp").setValue(firebaseTimeStamp)
+                            allPostsRef.child(randomRef).child("hasPicture").setValue(true)
+                            allPostsRef.child(randomRef).child("mediaURL").setValue(downloadURL()!.absoluteString)
+                            allPostsRef.child(randomRef).child("smallMediaURL").setValue(smallDownloadURL()!.absoluteString)
+                            allPostsRef.child(randomRef).child("message").setValue("picture with ID \(randomRef)")
+                            allPostsRef.child(randomRef).child("locationName").setValue(self.photoLocationName)
+                            myPostsRef.child(randomRef).child("timestamp").setValue(firebaseTimeStamp)
+                            updateScore(i: 2)
+                            justPosted = true
+                        }
+                    }
                 }
             }
+            
+            
+            
             
         } else {
             print(textView.text)
@@ -198,7 +212,8 @@ extension PostViewController: UIImagePickerControllerDelegate, UINavigationContr
             imagePicked = thisPhoto
             self.photo.image = imagePicked
             self.viewWithImage.isHidden = false
-            
+            photoLocation = currentLocation
+            photoLocationName = currentLocationName
             print("picked \(photo)")
         }
         self.dismiss(animated: true, completion: nil)

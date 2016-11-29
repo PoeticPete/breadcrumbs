@@ -15,14 +15,16 @@ struct Post {
     var timestamp: NSDate!
     var hasPicture: Bool!
     var mediaURL: String?
+    var smallMediaURL: String?
     
-    init(key:String, message:String, upVotes:Int, timestamp:NSDate, hasPicture:Bool!, mediaURL:String? = nil) {
+    init(key:String, message:String, upVotes:Int, timestamp:NSDate, hasPicture:Bool!, mediaURL:String? = nil, smallMediaURL:String? = nil) {
         self.key = key
         self.message = message
         self.upVotes = upVotes
         self.timestamp = timestamp
         self.hasPicture = hasPicture
         self.mediaURL = mediaURL
+        self.smallMediaURL = smallMediaURL
     }
     
 }

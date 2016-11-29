@@ -25,6 +25,7 @@ var currentLocationName = ""
 let storage = FIRStorage.storage()
 let storageRef = storage.reference()
 let imagesRef = storageRef.child("images")
+let smallImagesRef = storageRef.child("smallImages")
 var justPosted = false
 var currentScore = 0
 
@@ -100,6 +101,20 @@ func getColor(_ likes:Int) -> UIColor {
     // turquiose - UIColor(red: 26.0/255.0, green: 188.0/255.0, blue: 156.0/255.0, alpha: 1.0)
     // pomegranate - UIColor(red: 211.0/255.0, green: 84.0/255.0, blue: 0.0/255.0, alpha: 1.0)
 }
+
+func resizeImage(image: UIImage, newWidth: CGFloat) -> UIImage {
+    
+    let scale = newWidth / image.size.width
+    let newHeight = image.size.height * scale
+    
+    UIGraphicsBeginImageContext(CGSize(width: newWidth, height: newHeight))
+    image.draw(in: CGRect(x: 0, y: 0, width: newWidth, height: newHeight))
+    let newImage = UIGraphicsGetImageFromCurrentImageContext()
+    UIGraphicsEndImageContext()
+    
+    return newImage!
+}
+
 
 func dateFromMilliseconds(ms: NSNumber) -> NSDate {
     return NSDate(timeIntervalSince1970:Double(ms) / 1000.0)
